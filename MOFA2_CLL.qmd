@@ -143,14 +143,22 @@ Prepare the MOFA object
 MOFAobject = prepare_mofa(MOFAobject, model_options = model_opts)
 ```
 
-
 Train the model: this should take ~5min.
-```{r, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
 MOFAobject = run_mofa(MOFAobject, use_basilisk = FALSE)
 ```
 
+Save the model for later exploration
+```{r, eval=FALSE}
+saveRDS(MOFAobject, "./MOFAobject.rds")
+```
 
 ## Add sample metadata to the model
+
+Load already trained MOFA model
+```{r}
+MOFAobject <- readRDS("./MOFAobject.rds")
+```
 
 The sample metadata must be provided as a data.frame and it must contain a column `sample` with the sample IDs. Make sure that the samples in the metadata match the samples in the model
 ```{r}
