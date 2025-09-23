@@ -91,7 +91,9 @@ Load sample metadata as a data.frame. Important columns are:
 
 ```{r}
 #| label: CLL_metadata
-CLL_metadata = fread("http://ftp.ebi.ac.uk/pub/databases/mofa/cll_vignette/sample_metadata.txt")
+
+
+CLL_metadata = fread("./metadata/sample_metadata.txt")
 
 head(CLL_metadata) |> knitr::kable()
 ```
@@ -180,18 +182,15 @@ MOFAobject.ensembl = MOFAobject
 updated_features_names = features_names(MOFAobject)
 
 # Rename drug IDs (i.e. D_001) to drug names (i.e. navitoclax)
-drug_metadata = fread("http://ftp.ebi.ac.uk/pub/databases/mofa/cll_vignette/drugs.txt.gz")
+drug_metadata = fread("./metadata/drugs.txt.gz")
 tmp = drug_metadata$name; names(tmp) = drug_metadata$drug_id
 updated_features_names[["Drugs"]] = stringr::str_replace_all(features_names(MOFAobject)[["Drugs"]], tmp)
 
 # Rename mRNA from ENSEMBL IDs (i.e. ENSG00000223972) to gene names (i.e. DDX11L1)
-gene_metadata = fread("http://ftp.ebi.ac.uk/pub/databases/mofa/cll_vignette/Hsapiens_genes_BioMart.87.txt.gz")
+gene_metadata = fread("./metadata/Hsapiens_genes_BioMart.87.txt.gz")
 gene_metadata[,symbol:=ifelse(symbol=="",ens_id,symbol)]
 tmp = gene_metadata$symbol; names(tmp) = gene_metadata$ens_id
 
-# avoid duplicated names with the Mutations view
-tmp[tmp%in%features_names(MOFAobject)[["Mutations"]]] = paste0(tmp[tmp%in%features_names(MOFAobject)[["Mutations"]]],"_mRNA")
-updated_features_names[["mRNA"]] = stringr::str_replace_all(features_names(MOFAobject)[["mRNA"]], tmp)
 
 # Update features names in model
 features_names(MOFAobject) = updated_features_names
@@ -210,9 +209,9 @@ plot_variance_explained(MOFAobject, max_r2=10)
 
 What insights from the data can we learn just from inspecting this plot?  
 
-- **Factor 1**, **Factor 2** and **Factor 3** each captures a source of variability that is present in more than 3 data modalities. Thus, they may represent etiologies that are important for the disease.  
+- **Factor 1** captures a source of variability that is present in more than 3 data modalities. Thus, they may represent etiologies that is important for the disease.  
 - **Factor 4** captures some co-variation between the mRNA and the drug response assay.
-- **Factor 5** captures a strong source of variation that is exclusive to the mRNA data. 
+
 
 **(Q) Based on the MOFA output, if you were to profile just one molecular layer, which one would you choose to maximise the amount of sources of variation captured?**
 
@@ -338,12 +337,12 @@ plot_data_heatmap(MOFAobject,
 )
 ```
 
-# Characterisation of Factor 2
+# Characterisation of Factor 5
 
-**(Q) Your task is to provide a characterisation for Factor 2**.  
+**(Q) Your task is to provide a characterisation for Factor 5**.  
 
 Try a similar pipeline as for Factor 1 and answer the following questions:  
-- Which mutation underlies Factor 2?  
+- Which mutation underlies Factor 5?  
 - Can you identify mRNA markers?  
 - Do a (small) bibliographical search to check if your predictions make sense  
 
@@ -352,7 +351,7 @@ Try a similar pipeline as for Factor 1 and answer the following questions:
 Now that we have characterised the etiology of the two main Factors, let's do a scatterplot colouring each patient by their somatic mutation profile:
 ```{r}
 p = plot_factors(MOFAobject, 
-  factors = c(1,2), 
+  factors = c(1,5), 
   color_by = "IGHV",
   shape_by = "trisomy12",
   dot_size = 2.5,
@@ -422,10 +421,10 @@ It seems that most of the Factors do not have clear gene set signatures. A clear
 plot_enrichment_heatmap(enrichment.results)
 ```
 
-**(Q) Can you characterise Factor 4 based on the GSEA results? Which genes are driving the top enriched pathways?**  
+**(Q) Can you characterise Factor 3 based on the GSEA results? Which genes are driving the top enriched pathways?**  
 Hint: use the functions `plot_enrichment`
 
-**(Q) Which drugs are associated with Factor 4? What is their target pathway? Do they make biological sense?**  
+**(Q) Which drugs are associated with Factor 3? What is their target pathway? Do they make biological sense?**  
 Hint: use the `drug_metadata` object
 
 
@@ -495,13 +494,13 @@ By inspecting the variance explained plot, we can see that the RNA expression is
 If were were to profile just one molecular layer for a large number of patients in a cost-effective way, we would need to compare the feasibility and costs of Drug response assays and RNA sequencing. The latter is much cheaper and more standarised in the community.
 
 
-### (Q) Provide a characterisation for Factor 2
+### (Q) Provide a characterisation for Factor 5
 
 Following a similar strategy as for Factor 1, we notice that Factor 2 is also active in the somatic mutation view. Thus, there must be a mutation that underlies this phenotype. Let's plot the corresponding weights:
 ```{r}
 plot_weights(MOFAobject, 
   view = "Mutations", 
-  factor = 2, 
+  factor = 5, 
   nfeatures = 5,
   abs = F
 )
@@ -512,7 +511,7 @@ In this case we have two mutations that have large weight. One of them is the tr
 Let's verify this by plotting the Factor values grouping samples by the presence or absence of trisomy12:
 ```{r}
 plot_factor(MOFAobject, 
-  factors = 2, 
+  factors = 5, 
   color_by = "trisomy12",
   dodge = TRUE,
   add_violin = TRUE
@@ -523,7 +522,7 @@ As we did for the IGHV factor we can also inspect the molecular signatures in th
 ```{r}
 plot_data_scatter(MOFAobject, 
   view = "Drugs",
-  factor = 2,  
+  factor = 5,  
   features = 4,
   sign = "positive",
   color_by = "trisomy12"
@@ -533,7 +532,7 @@ plot_data_scatter(MOFAobject,
 ```{r}
 plot_data_heatmap(MOFAobject, 
   view = "mRNA",
-  factor = 2,  
+  factor = 5,  
   features = 25,
   denoise = TRUE,
   cluster_rows = TRUE, cluster_cols = FALSE,
